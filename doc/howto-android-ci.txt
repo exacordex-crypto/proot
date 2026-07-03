@@ -1,0 +1,19 @@
+Android/NDK CI contract
+=======================
+
+This repository builds the native proot executable, not an Android APK. The
+release artifact is therefore a native binary archive. APK signing is outside
+this repository until an Android application wrapper exists.
+
+The GitHub Actions workflow keeps the Android delivery contract explicit by
+checking both supported NDK ABIs:
+
+* armeabi-v7a for ARM32 compatibility.
+* arm64-v8a for ARM64 compatibility.
+
+The Android job uses NDK r27c and uploads one ABI report per ABI. It is a
+fail-fast guard against workflow drift: if the NDK toolchain or ABI name changes,
+CI fails before a release can pretend to support an unverified ABI.
+
+Native Linux artifacts are built by scripts/build-native.sh, tested through the
+existing tests makefile, and uploaded as proot-linux-x86_64.tar.gz.

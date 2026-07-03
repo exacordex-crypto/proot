@@ -8,3 +8,12 @@
 /src/proot
 
 *~
+/dist/
+/src/loader.exe
+/src/loader-m32.exe
+/tests/failure
+/tests/rootfs/
+/tests/d1/
+/tests/r1
+/tests/dl1
+/tests/rl1

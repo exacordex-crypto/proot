@@ -1,8 +1,17 @@
 #include <stdlib.h>
 #include <signal.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/syscall.h>  /* __NR_memfd_create,  */
-#include <linux/ashmem.h> /* ASHMEM_GET_SIZE,  */
+#if __has_include(<linux/ashmem.h>)
+# include <linux/ashmem.h> /* ASHMEM_GET_SIZE, ASHMEM_SET_SIZE */
+#else
+# include <linux/ioctl.h>
+# define ASHMEM_NAME_LEN 256
+# define __ASHMEMIOC 0x77
+# define ASHMEM_SET_SIZE _IOW(__ASHMEMIOC, 3, size_t)
+# define ASHMEM_GET_SIZE _IO(__ASHMEMIOC, 4)
+#endif
 #include <linux/memfd.h>  /* MFD_CLOEXEC  */
 
 #include <talloc.h>
