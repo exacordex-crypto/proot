@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-linux:
+    name: Linux native build and tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native dependencies
+        run: sudo apt-get update && sudo apt-get install -y libtalloc-dev gcc-multilib gdb strace
+      - name: Build loaders and proot
+        run: ./scripts/build-native.sh
+      - name: Run validation tests
+        run: env PATH=/bin:/usr/bin:/sbin:/usr/sbin:$PWD/src make -C tests
+      - name: Package native artifact
+        run: |
+          mkdir -p dist/linux-x86_64
+          cp src/proot src/loader/loader src/loader/loader-m32 dist/linux-x86_64/
+          tar -C dist -czf dist/proot-linux-x86_64.tar.gz linux-x86_64
+      - name: Upload native artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: proot-linux-x86_64
+          path: dist/proot-linux-x86_64.tar.gz
+          if-no-files-found: error
+
+  android-ndk:
+    name: Android NDK ABI contract check
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: [armeabi-v7a, arm64-v8a]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Android NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r27c
+          add-to-path: true
+      - name: Validate Android toolchain for ${{ matrix.abi }}
+        run: ./scripts/android-abi-check.sh "${{ matrix.abi }}"
+      - name: Upload Android ABI report
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-${{ matrix.abi }}-abi-report
+          path: dist/android-${{ matrix.abi }}-abi-report.txt
+          if-no-files-found: error
